@@ -57,7 +57,7 @@ const xStartIndex = Math.floor(COLUMNS / 2) - 1;
 let currentTetromino = getRandomTetromino();
 let position = { x: xStartIndex, y: 0 };
 
-const gameBoard = Array.from({ length: ROWS }).map(() =>
+let gameBoard = Array.from({ length: ROWS }).map(() =>
   new Array(COLUMNS).fill(0)
 );
 
@@ -87,7 +87,32 @@ const placeTetromino = () => {
   return false;
 };
 
+const resetGame = () => {
+  gameBoard = Array.from({ length: ROWS }).map(() =>
+    new Array(COLUMNS).fill(0)
+  );
+  currentTetromino = getRandomTetromino();
+  position = { x: xStartIndex, y: 0 };
+};
+
 const render = () => {
+  const isGameOver = gameBoard.every((row) => {
+    return row.includes(1);
+  });
+
+  if (isGameOver) {
+    alert("game over");
+    resetGame();
+    return;
+  }
+
+  gameBoard.forEach((row, i) => {
+    if (row.every((rowElement) => rowElement === 1)) {
+      gameBoard.splice(i, 1);
+      gameBoard.unshift(new Array(ROWS).fill(0));
+    }
+  });
+
   let displayArea = "";
 
   for (let y = 0; y < ROWS; y++) {
@@ -160,7 +185,29 @@ const goLeft = () => {
 };
 
 const spaceKey = () => {
-  position.y = ROWS - currentTetromino.shape.length;
+  while (!placeTetromino()) {
+    position.y++;
+  }
+};
+
+const rotate = () => {
+  const currentShape = [...currentTetromino.shape];
+
+  currentTetromino.shape = Array.from({
+    length: currentTetromino.shape[0].length,
+  }).map(() => []);
+
+  currentTetromino.shape.forEach((shape, i) => {
+    currentShape.forEach((current) => {
+      shape.unshift(current[i]);
+    });
+  });
+
+  if (COLUMNS < position.x + currentTetromino.shape[0].length) {
+    while (COLUMNS !== position.x + currentTetromino.shape[0].length) {
+      position.x--;
+    }
+  }
 };
 
 const handleKeyDown = (event) => {
@@ -173,6 +220,9 @@ const handleKeyDown = (event) => {
       break;
     case "ArrowDown":
       goDown();
+      break;
+    case "ArrowUp":
+      rotate();
       break;
     case " ":
       spaceKey();
