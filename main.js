@@ -62,58 +62,29 @@ const gameBoard = Array.from({ length: ROWS }).map(() =>
 );
 
 const placeTetromino = () => {
-  if (ROWS - currentTetromino.shape.length === position.y) {
-    let indexY = position.y;
-    for (let y = 0; y < currentTetromino.shape.length; y++) {
-      let indexX = position.x;
-      for (let x = 0; x < currentTetromino.shape[y].length; x++) {
-        if (currentTetromino.shape[y][x] == 1) {
-          gameBoard[indexY][indexX] = 1;
+  for (let y = 0; y < currentTetromino.shape.length; y++) {
+    for (let x = 0; x < currentTetromino.shape[y].length; x++) {
+      if (currentTetromino.shape[y][x] === 1) {
+        const newY = position.y + y + 1;
+        const newX = position.x + x;
+        if (ROWS == newY || gameBoard[newY][newX] === 1) {
+          for (let i = 0; i < currentTetromino.shape.length; i++) {
+            for (let j = 0; j < currentTetromino.shape[i].length; j++) {
+              if (currentTetromino.shape[i][j] === 1) {
+                gameBoard[position.y + i][position.x + j] = 1;
+              }
+            }
+          }
+
+          currentTetromino = getRandomTetromino();
+          position = { x: xStartIndex, y: 0 };
+
+          return true;
         }
-        indexX++;
       }
-      indexY++;
     }
-    currentTetromino = getRandomTetromino();
-    position.x = xStartIndex;
-    position.y = 0;
   }
-  // for (let i = 0; i < currentTetromino.shape.length; i++) {
-  //   for (let j = 0; j < currentTetromino.shape[i].length; j++) {
-  //     if (currentTetromino.shape[i][j] === 1) {
-  //       const newY = position.y + i + 1;
-  //       const newX = position.x + j;
-
-  //       // Check bottom or collision with board
-  //       if (newY >= ROWS || gameBoard[newY][newX] === 1) {
-  //         // Lock tetromino to the board
-  //         for (let a = 0; a < currentTetromino.shape.length; a++) {
-  //           for (let b = 0; b < currentTetromino.shape[a].length; b++) {
-  //             if (currentTetromino.shape[a][b] === 1) {
-  //               const lockY = position.y + a;
-  //               const lockX = position.x + b;
-  //               if (
-  //                 lockY >= 0 &&
-  //                 lockY < ROWS &&
-  //                 lockX >= 0 &&
-  //                 lockX < COLUMNS
-  //               ) {
-  //                 gameBoard[lockY][lockX] = 1; // mark as filled
-  //               }
-  //             }
-  //           }
-  //         }
-
-  //         // Get new tetromino
-  //         currentTetromino = getRandomTetromino();
-  //         position = { x: Math.floor(COLUMNS / 2) - 1, y: 0 };
-
-  //         return true; // placed
-  //       }
-  //     }
-  //   }
-  // }
-  // return false; // not placed
+  return false;
 };
 
 const render = () => {
@@ -148,16 +119,43 @@ const render = () => {
 };
 
 const goDown = () => {
-  const placed = placeTetromino();
-  if (!placed) position.y += 1;
+  if (!placeTetromino()) position.y += 1;
   render();
 };
 
 const goRight = () => {
+  const shape = currentTetromino.shape;
+
+  for (let row = 0; row < shape.length; row++) {
+    for (let col = 0; col < shape[row].length; col++) {
+      if (shape[row][col] === 1) {
+        const newX = position.x + col + 1;
+        const newY = position.y + row;
+
+        if (newX >= COLUMNS || gameBoard[newY][newX] === 1) {
+          return;
+        }
+      }
+    }
+  }
+
   position.x++;
 };
 
 const goLeft = () => {
+  const shape = currentTetromino.shape;
+
+  for (let row = 0; row < shape.length; row++) {
+    for (let col = shape[row].length - 1; col >= 0; col--) {
+      if (shape[row][col] === 1) {
+        const newY = position.y + row;
+        const newX = position.x + col - 1;
+        if (newX < 0 || gameBoard[newY][newX] === 1) {
+          return;
+        }
+      }
+    }
+  }
   position.x--;
 };
 
@@ -166,7 +164,6 @@ const spaceKey = () => {
 };
 
 const handleKeyDown = (event) => {
-  console.log(event.key);
   switch (event.key) {
     case "ArrowLeft":
       goLeft();
